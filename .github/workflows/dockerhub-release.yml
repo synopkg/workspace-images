@@ -60,18 +60,6 @@ jobs:
           # don't fail parsing the file while it contains empty creds the first time
           echo "{}" > $SKOPEO_AUTH_DIR/auth
 
-      - name: ☁️ Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2.1.1
-        with:
-          version: 393.0.0
-
-      - name: 🔐 Authenticate to Google Cloud
-        id: "auth"
-        uses: google-github-actions/auth@v2.1.5
-        with:
-          token_format: "access_token"
-          workload_identity_provider: ${{env.WORKLOAD_IDENTITY_POOL_ID}}
-          service_account: ${{env.IAM_SERVICE_ACCOUNT}}
 
       - name: ✍🏽 Login to GAR using skopeo
         env:
