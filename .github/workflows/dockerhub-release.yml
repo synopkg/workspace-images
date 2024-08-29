@@ -20,8 +20,8 @@ jobs:
       id-token: "write"
     env:
       WORKLOAD_IDENTITY_POOL_ID: projects/665270063338/locations/global/workloadIdentityPools/workspace-images-github-actions/providers/workspace-images-gha-provider
-      GAR_IMAGE_REGISTRY: europe-docker.pkg.dev
-      DH_IMAGE_REGISTRY: registry.hub.docker.com
+      GAR_IMAGE_REGISTRY: ghcr.io
+      DH_IMAGE_REGISTRY: ghcr.io
       IAM_SERVICE_ACCOUNT: workspace-images-gha-sa@gitpod-artifacts.iam.gserviceaccount.com
       SKOPEO_VERSION: 1
 
@@ -29,7 +29,7 @@ jobs:
       - name: 📥 Checkout workspace-images
         uses: actions/checkout@v4
         with:
-          repository: gitpod-io/workspace-images
+          repository: synopkg/workspace-images
 
       - name: 🔧 Setup tools
         run: |
@@ -81,8 +81,8 @@ jobs:
 
       - name: ✍🏽 Login to Docker Hub using skopeo
         env:
-          docker_user: ${{ secrets.DOCKERHUB_USER_NAME }}
-          docker_password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+          docker_user: ${{ github.actor }}
+          docker_password: ${{ secrets.GITHUB_TOKEN }}
           SKOPEO_AUTH_DIR: ${{env.SKOPEO_AUTH_DIR}}
         run: |
           sudo -E skopeo login -u ${{ env.docker_user }} --password=${{ env.docker_password }} ${{ env.DH_IMAGE_REGISTRY }}
@@ -91,12 +91,12 @@ jobs:
         env:
           SKOPEO_AUTH_DIR: ${{env.SKOPEO_AUTH_DIR}}
         run: |
-          IMAGES=$(cat .github/promote-images.yml | yq '."europe-docker.pkg.dev/gitpod-artifacts/docker-dev"."images-by-tag-regex"|keys[]' -r)
+          IMAGES=$(cat .github/promote-images.yml | yq '."ghcr.io/synopkg-artifacts/docker-dev"."images-by-tag-regex"|keys[]' -r)
           for IMAGE in $IMAGES;
           do
             sudo -E skopeo copy --format=oci --dest-oci-accept-uncompressed-layers --retry-times=5 \
-            docker://${{ env.GAR_IMAGE_REGISTRY }}/gitpod-artifacts/docker-dev/$IMAGE:latest \
-            docker://${{ env.DH_IMAGE_REGISTRY }}/gitpod/$IMAGE:latest
+            docker://${{ env.GAR_IMAGE_REGISTRY }}/synopkg-artifacts/docker-dev/$IMAGE:latest \
+            docker://${{ env.DH_IMAGE_REGISTRY }}/synopkg/$IMAGE:latest
           done
   notify:
     if: always() && ((github.event_name == 'schedule') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
